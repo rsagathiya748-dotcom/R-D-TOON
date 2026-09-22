@@ -25,17 +25,12 @@ jobs:
       with:
         gradle-version: '6.9.4'
         
-    - name: Missing Android SDK Download Karein
-      run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;30.0.3"
-        
     - name: Build APK (Bina AIDE Premium)
       run: |
         cd project_code
         PROJECT_DIR=$(find . -name "settings.gradle" -exec dirname {} \; | head -n 1)
         
-        # Root configuration
+        # Root build.gradle setup
         cat << 'EOF' > "$PROJECT_DIR/build.gradle"
         buildscript {
             repositories {
@@ -54,12 +49,14 @@ jobs:
         }
         EOF
         
-        # App-level build.gradle ko modern standards par update karein
-        APP_GRADLE="$PROJECT_DIR/app/build.gradle"
-        sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 33/g' "$APP_GRADLE"
-        sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 33/g' "$APP_GRADLE"
+        # App build.gradle ko pre-installed SDK 33 par set karein
+        APP_GRADLE=$(find "$PROJECT_DIR" -name "build.gradle" | grep -v "$PROJECT_DIR/build.gradle" | head -n 1)
+        sed -i 's/compileSdkVersion .*/compileSdkVersion 33/g' "$APP_GRADLE"
         sed -i 's/buildToolsVersion .*/buildToolsVersion "30.0.3"/g' "$APP_GRADLE"
+        sed -i 's/targetSdkVersion .*/targetSdkVersion 33/g' "$APP_GRADLE"
+        sed -i "s/compile fileTree/implementation fileTree/g" "$APP_GRADLE"
         sed -i "s/compile '/implementation '/g" "$APP_GRADLE"
+        sed -i 's/compile "/implementation "/g' "$APP_GRADLE"
         
         cd "$PROJECT_DIR"
         gradle assembleDebug --no-daemon
