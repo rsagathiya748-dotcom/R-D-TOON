@@ -31,7 +31,27 @@ jobs:
     - name: Build APK (Bina AIDE Premium)
       run: |
         cd project_code
-        PROJECT_DIR=$(dirname $(find . -name "build.gradle" | head -n 1))
+        PROJECT_DIR=$(find . -name "settings.gradle" -exec dirname {} \; | head -n 1)
+        
+        # Root build.gradle ko compatible version me update karein
+        cat << 'EOF' > "$PROJECT_DIR/build.gradle"
+        buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:4.2.2'
+            }
+        }
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        EOF
+        
         cd "$PROJECT_DIR"
         gradle assembleDebug --no-daemon
         
